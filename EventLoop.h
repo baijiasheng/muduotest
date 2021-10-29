@@ -11,8 +11,6 @@
 #include "Poller.h"
 #include "Channel.h"
 
-//class Poller;
-
 using namespace std;
 
 using Functor = function<void()>; //一种函数封装

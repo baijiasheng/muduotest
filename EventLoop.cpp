@@ -7,14 +7,11 @@
 //防止一个线程创建多个eventloop
 __thread EventLoop *t_loop_in_thisTherad = nullptr;
 
-//定义默认的poller io复用超时时间
-const int k_poll_timeout = 10000;
+const int k_poll_timeout = 10000; //设置超时事件
 
-//创建wakeupfd，用来notify subreactor来处理新连接channel
 int CreateEventfd()
 {
-    //非阻塞且不被子进程继承
-    int event_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    int event_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);  //设置event_fd
     if (event_fd < 0)
     {
         perror("eventfd error:%d \n");
@@ -60,7 +57,6 @@ void EventLoop::loop()
     while (!quit_)
     {
         active_channels.clear();
-        //监听两类fd 一种是client的fd，一种wakeup的fd
         poll_return_time_ = poller_->poll(k_poll_timeout, &active_channels);
 
         for (Channel *channel : active_channels)
@@ -81,7 +77,6 @@ void EventLoop::quit()
 {
     quit_ = true;
 
-    //在其他线程中，调用的quit（在sub中调用main的loop）
     if (!is_in_loopThread() || calling_pending_functors_)
     {
         wakeup();
@@ -115,8 +110,7 @@ void EventLoop::queue_in_loop(Functor cb)
     }
 }
 
-//向wakeupfd中写一个数据,wakeupchannel发生读事件，会被唤醒
-void EventLoop::wakeup()
+void EventLoop::wakeup() //唤醒
 {
     uint64_t one = 1;
     ssize_t n = write(wakeup_fd, &one, sizeof(one));

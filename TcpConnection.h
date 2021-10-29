@@ -14,11 +14,6 @@ class Socket;
 
 using namespace std;
 
-/*
- *  tcpserver 通过accepter，有一个新用户连接，accep拿到connfd
- * tcpconnection设置channel相应回调，poller调用回调 
-*/
-
 class TcpConnection : NonCopyable, public enable_shared_from_this<TcpConnection>
 {
 private:
@@ -76,7 +71,7 @@ private:  //设置读写，关闭和报错
     void shutdown_inLoop(); //结束线程
 
 private:
-    EventLoop *loop_; //所属subloop，非baseloop
+    EventLoop *loop_; 
     const string name_;
 
     atomic_int state_;

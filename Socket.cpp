@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <netinet/tcp.h>
 #include "Socket.h"
-// #include "Logger.hpp"
+#include "Logger.hpp"
 #include "InetAddress.h"
 
 Socket::~Socket()
@@ -17,7 +17,7 @@ void Socket::bind_address(const InetAddress &loacladdr)
 {
     if (bind(sockfd_, (sockaddr *)loacladdr.get_sockaddr(), sizeof(sockaddr_in)) != 0)
     {
-        perror("bind sockfd:%d fail \n", sockfd_);
+        perror("bind sockfd:%d fail \n");
     }
 }
 
@@ -25,16 +25,12 @@ void Socket::listen()
 {
     if (::listen(sockfd_, 1024) != 0)
     {
-        perror("listen sockfd:%d fail \n", sockfd_);
+        perror("listen sockfd:%d fail \n");
     }
 }
 
 int Socket::accept(InetAddress *peeraddr)
 {
-    /*
-    *   1.accept 参数不合法
-    *   2.对返回的connfd没有设置非阻塞
-    */
     sockaddr_in addr;
     bzero(&addr, sizeof(addr));
 

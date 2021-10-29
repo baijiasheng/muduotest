@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <functional>
-#include "TimeStamp.hpp"
+#include "TimeStamp.h"
 
 class Buffer;
 class TcpConnection;

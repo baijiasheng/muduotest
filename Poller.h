@@ -8,9 +8,7 @@ class EventLoop;
 
 using ChannelList = vector<Channel *>;
 using ChannelMap = unordered_map<int, Channel *>;
-/*
-*  io复用模块 muduo中多路事件分发器的核心
-*/
+
 class Poller : NonCopyable
 {
 public:
@@ -18,7 +16,6 @@ public:
 
     virtual ~Poller() = default;
 
-    //所有io复用保留统一接口
     virtual TimeStamp poll(int timeout, ChannelList *active_channels) = 0;
 
     //判断channel是否在当前poller中
@@ -31,9 +28,8 @@ public:
     virtual void remove_channel(Channel *channel) = 0;
 
 protected:
-    //key: fd  value:fd所属channel
     ChannelMap channels_;
 
 private:
-    EventLoop *owner_loop_; //polllers所属事件循环
+    EventLoop *owner_loop_;
 };

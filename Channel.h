@@ -22,14 +22,11 @@ public:
     //fd得到poller通知以后，根据具体发生的事件，调用相应的回调
     void handle_event(TimeStamp receive_time);
 
-    //防止channel被remove掉，channel还在执行回调
     //一个tcpconnection新连接创建的时候，调用tie
     void tie(const shared_ptr<void> &);
 
-    //得到socket套接字
     int get_fd() const { return fd_; }
 
-    //得到感兴趣事件
     int get_events() const { return events_; }
 
     //设置真正发生的事件,poller监听到事件然后设置real_event
@@ -41,7 +38,6 @@ public:
     //返回所属eventloop
     EventLoop *owner_loop() { return loop_; }
 
-    //在channel所属的eventloop中删除自己
     void remove();
 
     int index() { return index_; }

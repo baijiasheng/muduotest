@@ -1,7 +1,7 @@
 #include <sys/epoll.h>
 #include "Channel.h"
 #include "EventLoop.h"
-// #include "Logger.hpp"
+#include "Logger.hpp"
 
 const int Channel::k_none_event_ = 0;
 const int Channel::k_read_event_ = EPOLLIN | EPOLLPRI;
@@ -16,12 +16,11 @@ Channel::~Channel()
 {
 }
 
-//fd得到poller通知以后，根据具体发生的事件，调用相应的回调
-void Channel::handle_event(TimeStamp receive_time)
+void Channel::handle_event(TimeStamp receive_time)  //根据poller返回的通知调用相应办法
 {
     if (tied_)
     {
-        shared_ptr<void> guard = tie_.lock(); //提升为强智能指针
+        shared_ptr<void> guard = tie_.lock();
         if (guard)
         {
             handle_event_withGuard(receive_time);
@@ -33,20 +32,17 @@ void Channel::handle_event(TimeStamp receive_time)
     }
 }
 
-//防止channel被remove掉，channel还在执行回调
 void Channel::tie(const shared_ptr<void> &obj)
 {
     tie_ = obj;
     tied_ = true;
 }
 
-//在channel所属的eventloop中删除自己
 void Channel::remove()
 {
     loop_->update_channel(this);
 }
 
-//与poller更新fd所感兴趣事件
 void Channel::update()
 {
     //通过channel所属的eventloop，调用poller的相应方法，注册fd的events事件

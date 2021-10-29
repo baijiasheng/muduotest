@@ -17,37 +17,30 @@ EventLoop *CheckLoopNotNull(EventLoop *loop)  //查看线程是否为空
 TcpServer::TcpServer(EventLoop *loop, const InetAddress &listenaddr, const string &name, Option option)
     : loop_(CheckLoopNotNull(loop)), ip_port_(listenaddr.get_ip_port()), name_(name), acceptor_(new Acceptor(loop, listenaddr, option == k_reuse_port)), thread_pool_(new EventLoopThreadPool(loop, name_)), connection_callback_(), message_callback_(), next_conn_id_(1), started_(0)
 {
-    //当有新连接会执行new_connection
-    acceptor_->set_new_connection_callback(bind(&TcpServer::new_connection, this, _1, _2));
+    acceptor_->set_new_connection_callback(bind(&TcpServer::new_connection, this, _1, _2)); //有新连接时调用accept
 }
 TcpServer::~TcpServer()
 {
     for (auto &it : connections_)
     {
-        TcpConnectionPtr conn(it.second); //出右括号，这个局部shared_ptr智能只针对新，出右括号，自动释放new出来的tcpconnection对象
+        TcpConnectionPtr conn(it.second); 
         it.second.reset();
 
         conn->get_loop()->run_in_loop(bind(&TcpConnection::destory_connect, conn));
     }
 }
 
-//设置底层subloop的个数
-void TcpServer::set_thread_num(int thread_num)
+void TcpServer::set_thread_num(int thread_num) //设置线程数
 {
     thread_pool_->set_threadNum(thread_num);
 }
 
-//开启服务器监听
 void TcpServer::start()
 {
-    if (started_++ == 0) //防止被多次启动
-    {
-        thread_pool_->start(thread_init_callback_);
-        loop_->run_in_loop(bind(&Acceptor::listen, acceptor_.get()));
-    }
+    thread_pool_->start(thread_init_callback_);
+    loop_->run_in_loop(bind(&Acceptor::listen, acceptor_.get()));
 }
 
-//有一个新的客户端的连接，acceptor会执行这个回调
 void TcpServer::new_connection(int sockfd, const InetAddress &peeraddr)
 {
     //轮询算法，选择一个subloop管理channel

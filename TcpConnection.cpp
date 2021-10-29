@@ -39,13 +39,10 @@ TcpConnection::TcpConnection(EventLoop *loop, const string name, int sockfd, con
     socket_->set_keepAlive(true);
 }
 
-//发送数据
 void TcpConnection::send(const string &buf)
 {
-    //必须是连接状态
-    if (state_ == k_connected)
+    if (state_ == k_connected) //判断是否连接
     {
-        //在所属loop所属的线程
         if (loop_->is_in_loopThread())
         {
             send_inLoop(buf);
@@ -57,21 +54,18 @@ void TcpConnection::send(const string &buf)
     }
 }
 
-//发送数据，应用写得快，内核发送的慢，我们需要把待发送数据写入缓冲区，而且设置了水位回调
 void TcpConnection::send_inLoop(const string &buf)
 {
     ssize_t nwrote = 0;
-    size_t remaining = buf.size(); //未发送完数据的长度
+    size_t remaining = buf.size(); 
     bool fault_error = false;
 
-    //之前调用了shutdown
     if (state_ == k_disconnected)
     {
         LOG_ERROR("disconnected,give up writing!\n");
         return;
     }
 
-    //channel第一次开始写数据，而且缓冲区无数据
     if (!channel_->is_writting() && output_buffer_.readable_bytes() == 0)
     {
         nwrote = write(channel_->get_fd(), buf.c_str(), buf.size());
@@ -89,20 +83,17 @@ void TcpConnection::send_inLoop(const string &buf)
         else
         {
             nwrote = 0;
-            //错误不是资源不可用
             if (errno != EWOULDBLOCK)
             {
                 LOG_ERROR("tcp connection::send in loop!\n");
-                //如果收到连接重置请求
-                if (errno == EPIPE || errno == ECONNRESET)
+                if (errno == EPIPE || errno == ECONNRESET) //收到重新连接请求
                 {
                     fault_error = true;
                 }
             }
         }
     }
-    //当前write没有把数据全部发送出去，剩余数据需要保存到缓冲区，
-    //然后给channel注册epollout，poller发现tcp缓冲区仍有数据，会调用handle write
+
     if (!fault_error && remaining > 0)
     {
         //目前发送缓冲区剩余的待发送的长度
@@ -149,7 +140,6 @@ void TcpConnection::establish_connect()
     connection_callback_(shared_from_this());
 }
 
-//销毁连接
 void TcpConnection::destory_connect()
 {
     if (state_ == k_connected)
@@ -184,8 +174,7 @@ void TcpConnection::handle_read(TimeStamp receive_time)
 
 void TcpConnection::handle_write()
 {
-    //如果channel对写事件感兴趣
-    if (channel_->is_writting())
+    if (channel_->is_writting()) //判断写事件
     {
         int save_errno = 0;
         ssize_t n = output_buffer_.writefd(channel_->get_fd(), &save_errno);
@@ -201,8 +190,7 @@ void TcpConnection::handle_write()
                     loop_->queue_in_loop(bind(write_complete_callback_, shared_from_this()));
                 }
 
-                //如果正在关闭
-                if (state_ == k_disconnecting)
+                if (state_ == k_disconnecting) //判断是否关闭连接
                 {
                     shutdown_inLoop();
                 }
@@ -213,7 +201,7 @@ void TcpConnection::handle_write()
             LOG_ERROR("tcp connection::handle write\n");
         }
     }
-    else //不可写
+    else
     {
         LOG_ERROR("tcp connection fd=%d is down,no more send\n", channel_->get_fd());
     }
@@ -242,7 +230,6 @@ void TcpConnection::handle_error()
 
     if (getsockopt(channel_->get_fd(), SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
     {
-        //出错
         err = errno;
     }
     else
